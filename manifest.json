@@ -1,0 +1,8 @@
+{
+  "domain": "custom_bbox",
+  "name": "Bbox",
+  "documentation": "https://github.com/earion68/hass_custom_bbox/",
+  "codeowners": [],
+  "iot_class": "local_polling",
+  "version": "0.0.1"
+}
