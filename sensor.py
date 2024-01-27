@@ -11,15 +11,17 @@ from .pybbox import Bbox
 
 from homeassistant.components.sensor import (
     PLATFORM_SCHEMA,
-    STATE_CLASS_MEASUREMENT,
     SensorEntity,
     SensorEntityDescription,
+)
+from homeassistant.components.sensor.const import (
+    SensorDeviceClass,
+    SensorStateClass,
 )
 from homeassistant.const import (
     CONF_MONITORED_VARIABLES,
     CONF_NAME,
-    DATA_RATE_MEGABITS_PER_SECOND,
-    DEVICE_CLASS_TIMESTAMP,
+    UnitOfDataRate,
 )
 import homeassistant.helpers.config_validation as cv
 from homeassistant.util import Throttle
@@ -37,27 +39,27 @@ SENSOR_TYPES: tuple[SensorEntityDescription, ...] = (
     SensorEntityDescription(
         key="down_max_bandwidth",
         name="Maximum Download Bandwidth",
-        native_unit_of_measurement=DATA_RATE_MEGABITS_PER_SECOND,
+        native_unit_of_measurement=UnitOfDataRate.MEGABITS_PER_SECOND,
         icon="mdi:download",
     ),
     SensorEntityDescription(
         key="up_max_bandwidth",
         name="Maximum Upload Bandwidth",
-        native_unit_of_measurement=DATA_RATE_MEGABITS_PER_SECOND,
+        native_unit_of_measurement=UnitOfDataRate.MEGABITS_PER_SECOND,
         icon="mdi:upload",
     ),
     SensorEntityDescription(
         key="current_down_bandwidth",
         name="Currently Used Download Bandwidth",
-        native_unit_of_measurement=DATA_RATE_MEGABITS_PER_SECOND,
-        state_class=STATE_CLASS_MEASUREMENT,
+        native_unit_of_measurement=UnitOfDataRate.MEGABITS_PER_SECOND,
+        state_class=SensorStateClass.MEASUREMENT,
         icon="mdi:download",
     ),
     SensorEntityDescription(
         key="current_up_bandwidth",
         name="Currently Used Upload Bandwidth",
-        native_unit_of_measurement=DATA_RATE_MEGABITS_PER_SECOND,
-        state_class=STATE_CLASS_MEASUREMENT,
+        native_unit_of_measurement=UnitOfDataRate.MEGABITS_PER_SECOND,
+        state_class=SensorStateClass.MEASUREMENT,
         icon="mdi:upload",
     ),
     SensorEntityDescription(
@@ -121,7 +123,7 @@ class BboxUptimeSensor(SensorEntity):
     """Bbox uptime sensor."""
 
     _attr_attribution = ATTRIBUTION
-    _attr_device_class = DEVICE_CLASS_TIMESTAMP
+    _attr_device_class = SensorDeviceClass.TIMESTAMP
 
     def __init__(self, bbox_data, name, description: SensorEntityDescription):
         """Initialize the sensor."""
