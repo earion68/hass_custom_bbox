@@ -78,7 +78,9 @@ class BboxDeviceScanner(DeviceScanner):
         """
         _LOGGER.info("Scanning")
 
-        box = Bbox(ip=self.host)
+        #box = Bbox(ip=self.host)
+        box = Bbox(ip='mabbox.bytel.fr')
+        box.login("[BBOX_PASSWORD_HERE]")
         result = box.get_all_connected_devices()
 
         now = dt_util.now()
