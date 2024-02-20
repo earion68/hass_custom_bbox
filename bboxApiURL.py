@@ -51,7 +51,7 @@ class BboxAPIUrl:
         """
         # Check if the ip is LAN or WAN
         #if net.IPAddress(self.ip).is_private():
-        url = "http://{}".format(self.ip)
+        url = "https://{}".format(self.ip)
         self.authentication_type = BboxConstant.AUTHENTICATION_TYPE_LOCAL
         #else:
         #    url = "https://{}:{}".format(self.ip,
