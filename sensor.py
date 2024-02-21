@@ -13,16 +13,17 @@ from homeassistant.components.sensor import (
     PLATFORM_SCHEMA,
     SensorEntity,
     SensorEntityDescription,
-)
-from homeassistant.components.sensor.const import (
-    SensorDeviceClass,
     SensorStateClass,
+    SensorDeviceClass
 )
 from homeassistant.const import (
     CONF_MONITORED_VARIABLES,
     CONF_NAME,
-    UnitOfDataRate,
+    CONF_PASSWORD,
+    CONF_HOST,
+    UnitOfDataRate
 )
+
 import homeassistant.helpers.config_validation as cv
 from homeassistant.util import Throttle
 from homeassistant.util.dt import utcnow
@@ -32,6 +33,7 @@ _LOGGER = logging.getLogger(__name__)
 ATTRIBUTION = "Powered by Bouygues Telecom"
 
 DEFAULT_NAME = "Bbox"
+DEFAULT_HOST = "mabbox.bytel.fr"
 
 MIN_TIME_BETWEEN_UPDATES = timedelta(seconds=60)
 
@@ -85,16 +87,21 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
             cv.ensure_list, [vol.In(SENSOR_KEYS)]
         ),
         vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
+        vol.Required(CONF_PASSWORD, default=""): cv.string,
+        vol.Optional(CONF_HOST, default=DEFAULT_HOST): cv.string
     }
 )
 
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
+    password = config[CONF_PASSWORD]
+    host = config[CONF_HOST]
+
     """Set up the Bbox sensor."""
     # Create a data fetcher to support all of the configured sensors. Then make
     # the first call to init the data.
     try:
-        bbox_data = BboxData()
+        bbox_data = BboxData(host, password)
         bbox_data.update()
     except requests.exceptions.HTTPError as error:
         _LOGGER.error(error)
@@ -104,13 +111,13 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
 
     monitored_variables = config[CONF_MONITORED_VARIABLES]
     entities: list[BboxSensor | BboxUptimeSensor] = [
-        BboxSensor(bbox_data, name, description)
+        BboxSensor(bbox_data, name, password, host, description)
         for description in SENSOR_TYPES
         if description.key in monitored_variables
     ]
     entities.extend(
         [
-            BboxUptimeSensor(bbox_data, name, description)
+            BboxUptimeSensor(bbox_data, name, password, host, description)
             for description in SENSOR_TYPES_UPTIME
             if description.key in monitored_variables
         ]
@@ -125,11 +132,13 @@ class BboxUptimeSensor(SensorEntity):
     _attr_attribution = ATTRIBUTION
     _attr_device_class = SensorDeviceClass.TIMESTAMP
 
-    def __init__(self, bbox_data, name, description: SensorEntityDescription):
+    def __init__(self, bbox_data, name, password, host, description: SensorEntityDescription):
         """Initialize the sensor."""
         self.entity_description = description
         self._attr_name = f"{name} {description.name}"
         self.bbox_data = bbox_data
+        self.host = host 
+        self.password = password
 
     def update(self):
         """Get the latest data from Bbox and update the state."""
@@ -144,11 +153,14 @@ class BboxSensor(SensorEntity):
 
     _attr_attribution = ATTRIBUTION
 
-    def __init__(self, bbox_data, name, description: SensorEntityDescription):
+    def __init__(self, bbox_data, name, password, host, description: SensorEntityDescription):
         """Initialize the sensor."""
         self.entity_description = description
         self._attr_name = f"{name} {description.name}"
         self.bbox_data = bbox_data
+        self.host = host 
+        self.password = password
+
 
     def update(self):
         """Get the latest data from Bbox and update the state."""
@@ -179,17 +191,20 @@ class BboxSensor(SensorEntity):
 class BboxData:
     """Get data from the Bbox."""
 
-    def __init__(self):
+    def __init__(self, host, password):
         """Initialize the data object."""
         self.data = None
         self.router_infos = None
+        self.host = host
+        self.password = password
 
     @Throttle(MIN_TIME_BETWEEN_UPDATES)
     def update(self):
         """Get the latest data from the Bbox."""
 
         try:
-            box = Bbox()
+            box = Bbox(ip=self.host)
+            box.login(self.password)
             self.data = box.get_ip_stats()
             self.router_infos = box.get_bbox_info()
         except requests.exceptions.HTTPError as error:

@@ -15,18 +15,22 @@ from homeassistant.components.device_tracker import (
     DeviceScanner,
 )
 from homeassistant.const import CONF_HOST
+from homeassistant.const import CONF_PASSWORD
 import homeassistant.helpers.config_validation as cv
 from homeassistant.util import Throttle
 import homeassistant.util.dt as dt_util
 
 _LOGGER = logging.getLogger(__name__)
 
-DEFAULT_HOST = "192.168.1.254"
+DEFAULT_HOST = "mabbox.bytel.fr"
 
 MIN_TIME_BETWEEN_SCANS = timedelta(seconds=60)
 
 PLATFORM_SCHEMA = PARENT_PLATFORM_SCHEMA.extend(
-    {vol.Optional(CONF_HOST, default=DEFAULT_HOST): cv.string}
+    {
+        vol.Required(CONF_PASSWORD, default=""): cv.string, 
+        vol.Optional(CONF_HOST, default=DEFAULT_HOST): cv.string
+    }
 )
 
 
@@ -47,6 +51,7 @@ class BboxDeviceScanner(DeviceScanner):
         """Get host from config."""
 
         self.host = config[CONF_HOST]
+        self.password = config[CONF_PASSWORD]
 
         """Initialize the scanner."""
         self.last_results: list[Device] = []
@@ -79,6 +84,7 @@ class BboxDeviceScanner(DeviceScanner):
         _LOGGER.info("Scanning")
 
         box = Bbox(ip=self.host)
+        box.login(self.password)
         result = box.get_all_connected_devices()
 
         now = dt_util.now()
