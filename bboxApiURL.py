@@ -49,14 +49,22 @@ class BboxAPIUrl:
         Build the url to use for making a call to the Bbox API
         :return: url string
         """
-        # Check if the ip is LAN or WAN
-        if net.IPAddress(self.ip).is_private():
-            url = "http://{}".format(self.ip)
-            self.authentication_type = BboxConstant.AUTHENTICATION_TYPE_LOCAL
-        else:
-            url = "https://{}:{}".format(self.ip,
-                                         BboxConstant.DEFAULT_REMOTE_PORT)
-            self.authentication_type = BboxConstant.AUTHENTICATION_TYPE_REMOTE
+
+        ################# deactivated below section after Bbox firmware 23.7.8 #################
+
+        ## Check if the ip is LAN or WAN
+        #if net.IPAddress(self.ip).is_private():
+        #    url = "http://{}".format(self.ip)
+        #    self.authentication_type = BboxConstant.AUTHENTICATION_TYPE_LOCAL
+        #else:
+        #    url = "https://{}:{}".format(self.ip, BboxConstant.DEFAULT_REMOTE_PORT)
+        #    self.authentication_type = BboxConstant.AUTHENTICATION_TYPE_REMOTE
+
+        ################# added below after Bbox firmware 23.7.8 #################
+        url = "https://{}".format(self.ip)
+        self.authentication_type = BboxConstant.AUTHENTICATION_TYPE_LOCAL
+
+        ################# end #################
 
         if self.api_class is None:
             url = "{}/{}".format(url, self.API_PREFIX)
