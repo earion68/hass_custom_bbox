@@ -20,12 +20,12 @@ Merged both codes into one custom component to solve:
 device_tracker:
 - platform: custom_bbox
   password: YOUR_BBOX_PASSWORD_HERE # mandatory
-  host: mabbox.bytel.fr # optional
+  host: mabbox.bytel.fr # optional, some users reported it should not be added when using a different subnet (10.x.x.x)
   
 sensor:
   - platform: custom_bbox
     password: YOUR_BBOX_PASSWORD_HERE # mandatory
-    host: mabbox.bytel.fr # optional
+    host: mabbox.bytel.fr  # optional, some users reported it should not be added when using a different subnet (10.x.x.x)
     monitored_variables: # pick the sensors you need below
       - down_max_bandwidth
       - up_max_bandwidth
