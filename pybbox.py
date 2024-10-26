@@ -1,11 +1,17 @@
 """The bbox component."""
 
-# import pybbox 
-
+import time
+import logging
 from .bboxConstant import BboxConstant
 from .bboxAuth import BboxAuth
 from .bboxApiURL import BboxAPIUrl
 from .bboxApiCall import BboxApiCall
+
+# Create logger
+_LOGGER = logging.getLogger(__name__)
+
+LOGINS_ATTEMPTS_NB = 30
+SECONDS_TO_WAIT_BETWEEN_LOGINS_ATTEMPTS = 2
 
 
 class Bbox:
@@ -34,24 +40,20 @@ class Bbox:
         """
         return self.bbox_url.authentication_type
 
-    """
-    USEFUL FUNCTIONS
-    """
-
-    """
-    DEVICE API
-    """
-
     def get_bbox_info(self):
         """
         This API returns Bbox information
         :return: numbers of info about the box itself (see API doc)
         :rtype: dict
         """
-        self.bbox_auth.set_access(BboxConstant.AUTHENTICATION_LEVEL_PUBLIC, BboxConstant.AUTHENTICATION_LEVEL_PRIVATE)
+        self.bbox_auth.set_access(
+            BboxConstant.AUTHENTICATION_LEVEL_PUBLIC,
+            BboxConstant.AUTHENTICATION_LEVEL_PRIVATE,
+        )
         self.bbox_url.set_api_name(BboxConstant.API_DEVICE, None)
-        api = BboxApiCall(self.bbox_url, BboxConstant.HTTP_METHOD_GET, None,
-                          self.bbox_auth)
+        api = BboxApiCall(
+            self.bbox_url, BboxConstant.HTTP_METHOD_GET, None, self.bbox_auth
+        )
         resp = api.execute_api_request()
         return resp.json()[0]
 
@@ -63,12 +65,15 @@ class Bbox:
         """
         if (luminosity < 0) or (luminosity > 100):
             raise ValueError("Luminosity must be between 0 and 100")
-        self.bbox_auth.set_access(BboxConstant.AUTHENTICATION_LEVEL_PRIVATE,
-                                  BboxConstant.AUTHENTICATION_LEVEL_PRIVATE)
+        self.bbox_auth.set_access(
+            BboxConstant.AUTHENTICATION_LEVEL_PRIVATE,
+            BboxConstant.AUTHENTICATION_LEVEL_PRIVATE,
+        )
         self.bbox_url.set_api_name(BboxConstant.API_DEVICE, "display")
-        data = {'luminosity': luminosity}
-        api = BboxApiCall(self.bbox_url, BboxConstant.HTTP_METHOD_PUT, data,
-                          self.bbox_auth)
+        data = {"luminosity": luminosity}
+        api = BboxApiCall(
+            self.bbox_url, BboxConstant.HTTP_METHOD_PUT, data, self.bbox_auth
+        )
         api.execute_api_request()
 
     def reboot(self):
@@ -77,11 +82,15 @@ class Bbox:
         Useful when trying to get xDSL sync
         """
         token = self.get_token()
-        self.bbox_auth.set_access(BboxConstant.AUTHENTICATION_LEVEL_PRIVATE, BboxConstant.AUTHENTICATION_LEVEL_PRIVATE)
+        self.bbox_auth.set_access(
+            BboxConstant.AUTHENTICATION_LEVEL_PRIVATE,
+            BboxConstant.AUTHENTICATION_LEVEL_PRIVATE,
+        )
         url_suffix = "reboot?btoken={}".format(token)
         self.bbox_url.set_api_name(BboxConstant.API_DEVICE, url_suffix)
-        api = BboxApiCall(self.bbox_url, BboxConstant.HTTP_METHOD_POST, None,
-                          self.bbox_auth)
+        api = BboxApiCall(
+            self.bbox_url, BboxConstant.HTTP_METHOD_POST, None, self.bbox_auth
+        )
         api.execute_api_request()
 
     def get_token(self):
@@ -92,16 +101,16 @@ class Bbox:
 
         .. todo:: make a token class to be able to store date of expiration
         """
-        self.bbox_auth.set_access(BboxConstant.AUTHENTICATION_LEVEL_PRIVATE, BboxConstant.AUTHENTICATION_LEVEL_PRIVATE)
+        self.bbox_auth.set_access(
+            BboxConstant.AUTHENTICATION_LEVEL_PRIVATE,
+            BboxConstant.AUTHENTICATION_LEVEL_PRIVATE,
+        )
         self.bbox_url.set_api_name(BboxConstant.API_DEVICE, "token")
-        api = BboxApiCall(self.bbox_url, BboxConstant.HTTP_METHOD_GET, None,
-                          self.bbox_auth)
+        api = BboxApiCall(
+            self.bbox_url, BboxConstant.HTTP_METHOD_GET, None, self.bbox_auth
+        )
         resp = api.execute_api_request()
-        return resp.json()[0]['device']['token']
-
-    """
-    LAN API
-    """
+        return resp.json()[0]["device"]["token"]
 
     def get_all_connected_devices(self):
         """
@@ -109,10 +118,14 @@ class Bbox:
         :return: a list with each device info
         :rtype: list
         """
-        self.bbox_auth.set_access(BboxConstant.AUTHENTICATION_LEVEL_PUBLIC, BboxConstant.AUTHENTICATION_LEVEL_PRIVATE)
+        self.bbox_auth.set_access(
+            BboxConstant.AUTHENTICATION_LEVEL_PUBLIC,
+            BboxConstant.AUTHENTICATION_LEVEL_PRIVATE,
+        )
         self.bbox_url.set_api_name(BboxConstant.API_HOSTS, None)
-        api = BboxApiCall(self.bbox_url, BboxConstant.HTTP_METHOD_GET, None,
-                          self.bbox_auth)
+        api = BboxApiCall(
+            self.bbox_url, BboxConstant.HTTP_METHOD_GET, None, self.bbox_auth
+        )
         resp = api.execute_api_request()
         return resp.json()[0]["hosts"]["list"]
 
@@ -126,13 +139,9 @@ class Bbox:
         """
         all_devices = self.get_all_connected_devices()
         for device in all_devices:
-            if ip == device['ipaddress']:
-                return device['active'] == 1
+            if ip == device["ipaddress"]:
+                return device["active"] == 1
         return False
-
-    """
-    USER ACCOUNT
-    """
 
     def login(self, password):
         """
@@ -142,15 +151,27 @@ class Bbox:
         :return: True if your auth is successful
         :rtype: bool
         """
-        self.bbox_auth.set_access(BboxConstant.AUTHENTICATION_LEVEL_PUBLIC, BboxConstant.AUTHENTICATION_LEVEL_PUBLIC)
+        self.bbox_auth.set_access(
+            BboxConstant.AUTHENTICATION_LEVEL_PUBLIC,
+            BboxConstant.AUTHENTICATION_LEVEL_PUBLIC,
+        )
         self.bbox_url.set_api_name("login", None)
-        data = {'password': password}
-        api = BboxApiCall(self.bbox_url, BboxConstant.HTTP_METHOD_POST, data,
-                          self.bbox_auth)
-        response = api.execute_api_request()
-        if response.status_code == 200:
-            self.bbox_auth.set_cookie_id(response.cookies["BBOX_ID"])
-        return self.bbox_auth.is_authentified()
+        data = {"password": password}
+        api = BboxApiCall(
+            self.bbox_url, BboxConstant.HTTP_METHOD_POST, data, self.bbox_auth
+        )
+
+        # Try to login several times
+        for attempt_nb in range(1, LOGINS_ATTEMPTS_NB + 1):
+            try:
+                response = api.execute_api_request()
+                if response.status_code == 200:
+                    self.bbox_auth.set_cookie_id(response.cookies["BBOX_ID"])
+                return self.bbox_auth.is_authentified()
+            except:
+                _LOGGER.warning(f"Login attempt nb {attempt_nb} failed")
+                time.sleep(SECONDS_TO_WAIT_BETWEEN_LOGINS_ATTEMPTS + attempt_nb)
+        raise Exception("Could not connect after {LOGINS_ATTEMPTS_NB} logins' fails")
 
     def logout(self):
         """
@@ -158,10 +179,14 @@ class Bbox:
         :return: True if your logout is successful
         :rtype: bool
         """
-        self.bbox_auth.set_access(BboxConstant.AUTHENTICATION_LEVEL_PUBLIC, BboxConstant.AUTHENTICATION_LEVEL_PUBLIC)
+        self.bbox_auth.set_access(
+            BboxConstant.AUTHENTICATION_LEVEL_PUBLIC,
+            BboxConstant.AUTHENTICATION_LEVEL_PUBLIC,
+        )
         self.bbox_url.set_api_name("logout", None)
-        api = BboxApiCall(self.bbox_url, BboxConstant.HTTP_METHOD_POST, None,
-                          self.bbox_auth)
+        api = BboxApiCall(
+            self.bbox_url, BboxConstant.HTTP_METHOD_POST, None, self.bbox_auth
+        )
         response = api.execute_api_request()
         if response.status_code == 200:
             self.bbox_auth.set_cookie_id(None)
@@ -177,10 +202,14 @@ class Bbox:
         :return: A dict with all data about your xdsl connection (see API doc)
         :rtype: dict
         """
-        self.bbox_auth.set_access(BboxConstant.AUTHENTICATION_LEVEL_PUBLIC, BboxConstant.AUTHENTICATION_LEVEL_PRIVATE)
+        self.bbox_auth.set_access(
+            BboxConstant.AUTHENTICATION_LEVEL_PUBLIC,
+            BboxConstant.AUTHENTICATION_LEVEL_PRIVATE,
+        )
         self.bbox_url.set_api_name(BboxConstant.API_WAN, "xdsl")
-        api = BboxApiCall(self.bbox_url, BboxConstant.HTTP_METHOD_GET, None,
-                          self.bbox_auth)
+        api = BboxApiCall(
+            self.bbox_url, BboxConstant.HTTP_METHOD_GET, None, self.bbox_auth
+        )
         resp = api.execute_api_request()
         return resp.json()[0]["wan"]["xdsl"]
 
@@ -190,10 +219,14 @@ class Bbox:
         :return: A dict with all stats about your xdsl connection (see API doc)
         :rtype: dict
         """
-        self.bbox_auth.set_access(BboxConstant.AUTHENTICATION_LEVEL_PUBLIC, BboxConstant.AUTHENTICATION_LEVEL_PRIVATE)
+        self.bbox_auth.set_access(
+            BboxConstant.AUTHENTICATION_LEVEL_PUBLIC,
+            BboxConstant.AUTHENTICATION_LEVEL_PRIVATE,
+        )
         self.bbox_url.set_api_name(BboxConstant.API_WAN, "xdsl/stats")
-        api = BboxApiCall(self.bbox_url, BboxConstant.HTTP_METHOD_GET, None,
-                          self.bbox_auth)
+        api = BboxApiCall(
+            self.bbox_url, BboxConstant.HTTP_METHOD_GET, None, self.bbox_auth
+        )
         resp = api.execute_api_request()
         return resp.json()[0]["wan"]["xdsl"]["stats"]
 
@@ -203,10 +236,14 @@ class Bbox:
         :return: A dict with all stats about your Wan ip connection (see API doc)
         :rtype: dict
         """
-        self.bbox_auth.set_access(BboxConstant.AUTHENTICATION_LEVEL_PUBLIC, BboxConstant.AUTHENTICATION_LEVEL_PRIVATE)
+        self.bbox_auth.set_access(
+            BboxConstant.AUTHENTICATION_LEVEL_PUBLIC,
+            BboxConstant.AUTHENTICATION_LEVEL_PRIVATE,
+        )
         self.bbox_url.set_api_name(BboxConstant.API_WAN, "ip/stats")
-        api = BboxApiCall(self.bbox_url, BboxConstant.HTTP_METHOD_GET, None,
-                          self.bbox_auth)
+        api = BboxApiCall(
+            self.bbox_url, BboxConstant.HTTP_METHOD_GET, None, self.bbox_auth
+        )
         resp = api.execute_api_request()
         return resp.json()[0]["wan"]["ip"]["stats"]
 
@@ -242,8 +279,8 @@ class Bbox:
         :return: 0 no bandwith is used, 100 all your bandwith is used
         :rtype: int
         """
-        ip_stats_up = self.get_ip_stats()['tx']
-        percent = ip_stats_up['bandwidth']*100/ip_stats_up['maxBandwidth']
+        ip_stats_up = self.get_ip_stats()["tx"]
+        percent = ip_stats_up["bandwidth"] * 100 / ip_stats_up["maxBandwidth"]
         return int(percent)
 
     def get_down_used_bandwith(self):
@@ -253,6 +290,6 @@ class Bbox:
         :return: 0 no bandwith is used, 100 all your bandwith is used
         :rtype: int
         """
-        ip_stats_up = self.get_ip_stats()['rx']
-        percent = ip_stats_up['bandwidth']*100/ip_stats_up['maxBandwidth']
+        ip_stats_up = self.get_ip_stats()["rx"]
+        percent = ip_stats_up["bandwidth"] * 100 / ip_stats_up["maxBandwidth"]
         return int(percent)
