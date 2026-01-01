@@ -1,4 +1,5 @@
 import requests
+import ssl
 from .bboxConstant import BboxConstant
 from .bboxAuth import BboxAuth
 from .bboxApiURL import BboxAPIUrl
@@ -30,10 +31,10 @@ class BboxApiCall:
             self.call_method = requests.put
             
             
-        requests.packages.urllib3.util.ssl_.DEFAULT_CIPHERS += 'HIGH:!DH:!aNULL'
+        ssl_context = ssl.create_default_context()
         try:
-            requests.packages.urllib3.contrib.pyopenssl.DEFAULT_SSL_CIPHER_LIST += 'HIGH:!DH:!aNULL'
-        except AttributeError:
+            ssl_context.set_ciphers('HIGH:!DH:!aNULL')
+        except ssl.SSLError:
             # no pyopenssl support used / needed / available
             pass
 
