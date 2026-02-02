@@ -1,20 +1,21 @@
-# hass_custom_bbox
-Custom Home Assistant integration for Bbox
+# Home Assistant Bbox custom
 
-Based on Home Assistant Bbox integration: https://www.home-assistant.io/integrations/bbox and PyBbox: https://github.com/HydrelioxGitHub/pybbox
+Custom Home Assistant integration for Bbox, improved for connection stability regarding [hass_custom_bbox fork](https://github.com/earion68/hass_custom_bbox). This custom component builds on the original [Home Assistant Bbox integration](https://www.home-assistant.io/integrations/bbox) and the [PyBbox library](https://github.com/HydrelioxGitHub/pybbox), merging both to address common issues and improve connectivity with Bouygues Telecom’s Bbox and adding a fix to the Bbox's login Connection stability.
 
-Merged both codes into one custom component to solve:
-- the SSL DH_KEY_TOO_SMALL issue arising from Home Assistant 2022.7 which uses an up-to-date version of OpenSSL with higher security requirements and for which Bouygues Telecom did not update the firmware.
-- deprecated constants to be removed in 2025.1
-- the Bbox firmware 23.7.8 which systematically requires login to the API
+## Key improvements
+This version resolves:
+- **Connection stability**: Reduces connectivity drops and improves the reliability of device tracking and sensor updates with Bbox.
+- **SSL DH_KEY_TOO_SMALL issue**: Related to the Home Assistant 2022.7 upgrade using an updated OpenSSL version with stricter security protocols that are unsupported by Bbox firmware.
+- **Deprecated constants**: Prepares the integration for changes in Home Assistant, with deprecated constants set to be removed by 2025.1.
+- **API login stability**: Solves the login prompt required by Bbox firmware version 23.7.8 by enforcing a stable login process.
 
 ## Breaking changes
-- The last version fixing the firmware 23.7.8 makes the "password" key in the configuration mandatory.
-- The default host, if not mentioned, will be mabbox.bytel.fr
+- Firmware 23.7.8 makes the "password" field mandatory for configuration.
+- Default host, if unspecified, is set to `mabbox.bytel.fr`.
 
-## Usage:
-- download all files in a new folder named "custom_bbox" under "custom_components" of the Home Assistant config folder (example: /config/custom_components/custom_bbox)
-- instanciate the custom component in configuration.yaml as below:
+## Installation and usage:
+- **Download files**: Download all files to a folder named `custom_bbox` in the `custom_components` directory of your Home Assistant config folder (e.g., `/config/custom_components/custom_bbox`).
+- **Configure** in `configuration.yaml` as below:
 
 ```yaml
 device_tracker:
